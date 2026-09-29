@@ -1,0 +1,999 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"] 
+  previewFeatures = ["postgresqlExtensions"] 
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector")]
+}
+
+model User {
+  id                                  String                                @id @default(cuid())
+  email                               String                                @unique
+  fullName                            String
+  password                            String
+  count                               Int                                   @unique @default(autoincrement())
+  profileImage                        String?  
+
+  bio                                 String?
+  dateOfBirth                         DateTime?
+  highestEducation                    String?
+  countryOfOrigin                     String?
+  maritalStatus                       String?
+  employmentStatus                    String?
+  currentJobRole                      String?
+  fieldOfStudy                        String?
+
+  planType                            String?
+  billingCycle                        String?
+  nextBillingDate                     DateTime?
+  lastPaymentDate                     DateTime?
+
+  createdAt                           DateTime                              @default(now())
+  updatedAt                           DateTime                              @updatedAt
+  isAdmin                             Boolean                               @default(false)
+  isBlocked                           Boolean                               @default(false)
+  isSuspended                         Boolean                               @default(false)
+  isActive                            Boolean                               @default(true)
+  emailVerified                       DateTime?                             @map("email_verified")
+
+  notifications                       Notification[]
+  account                             Account?
+  subscription                        Subscription[]
+  invoice                             Invoice[]
+  updateResponse                      UpdateResponse[]
+
+  academyProgram                      AcademyProgram[]
+  specializedCourses                  SpecializedCourses[]
+  researchCenter                      ResearchCenter[]
+  academyLibrary                      AcademyLibrary[]
+
+  studyPrograms                       StudyPrograms[]
+  checkBestFits                       CheckBestFits[]
+  timetable                           EnrolledProgram[]
+  certificates                        Certificates[]
+
+  @@index([email])
+}
+
+model Account {
+  id               String      @id @default(cuid())
+  userId           String      @unique @map("user_id")
+  type             String
+  provider         String
+  handle           String?     @unique
+  refresh_token    String?
+  access_token     String?
+  otp              String?
+  otpExpiration    DateTime?
+  tempPassword     String?
+  emailVerified    DateTime?
+  isVerified       Boolean     @default(false)
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  expires_at       DateTime?
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  isSuspendedAt    DateTime?
+  user             User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("accounts")
+}
+
+model Activity {
+  id                           String       @id @default(cuid())
+  userId                       String
+
+  isCreatingProgram            Boolean     @default(false)
+  isCreatingCourse             Boolean     @default(false)
+  isCreatingResearch           Boolean     @default(false)
+  
+  isCreatingStudy              Boolean     @default(false)
+  isCreatingStudyProgram       Boolean     @default(false)
+  isCreatingBestFits           Boolean     @default(false)
+ 
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+}
+
+
+model UpdateResponse {
+  id                      String   @id @default(cuid())
+  userId                  String
+
+  programUpdate           String?
+  courseUpdate            String?
+  researchUpdate          String?
+  libraryUpdate           String?
+
+  dashboardsUpdate        String?   
+  settingsUpdate          String?   
+  notificationUpdate      String?
+
+  studyProgramsUpdate     String?
+  checkBestFitsUpdate     String?
+  timetableupdate         String?
+  certificatesUpdate      String? 
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  user                    User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Employee {
+  id                    String    @id @default(cuid()) 
+  email                 String    @unique @map("emails")
+  userId                String    @unique @map("user_id")
+  role                  Roles
+  fullName              String  
+  country               String
+  fullAddress           String
+  state                 String
+  city                  String
+  phoneNumber           String
+  idCard                String?
+  profileImage          String?
+  governmentId          String?
+  isOnboarded           Boolean    @default(false)
+  isActiveInCompany     Boolean    @default(false) 
+  joinedAt              DateTime   @default(now())
+  leftAt                DateTime? 
+  @@map("employees") 
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  reason    String
+  statement String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Subscription {
+  id                          String           @id @default(cuid())
+  userId                      String
+  email                       String
+  planType                    String
+  billingCycle                String
+  amount                      String
+  isActive                    Boolean          @default(false)
+  isSuspended                 Boolean          @default(true)
+  isBlocked                   Boolean          @default(false)
+  trialEndsAt                 DateTime?
+  nextBillingDate             DateTime?
+  lastPaymentDate             DateTime?
+  cancellationDate            DateTime?
+  periodStart                 DateTime?
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
+  user                        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id               String           @id @default(cuid())
+  userId           String
+  name             String
+  invoiceId        String
+  amount           String
+  status           String
+  planType         String
+  billingCycle     String
+  nextBillingDate  DateTime
+  isCompleted      Boolean          @default(false)
+  cardType         String?
+  cardNumber       String?
+  cardExpiry       String?
+  isPrimary        Boolean          @default(false)
+  invoiceLink      String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Earning {
+  id                   String   @id @default(cuid())
+  userId               String
+  planType             String
+  billingCycle         String
+  nextBillingDate      DateTime
+  status               String
+  isCompleted          Boolean          @default(false)
+  amount               Int      @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model Notification {
+  id              String       @id @default(cuid())
+  userId          String?
+  title           String
+  description     String
+  isRead          Boolean     @default(false)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  user            User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+
+model AcademyProgram {
+  id                           String       @id @default(cuid())
+  userId                       String
+  title                        String?
+  description                  String?
+
+  programTitle                 String
+  institutionName              String
+  countryName                  String
+  language                     String
+  countryFlag                  String
+  tierTitle                    String
+  levelTitle                   String
+  fieldOfStudy                 String
+  dateOfBirth                  DateTime
+
+  educationLevel               String
+  countryOfOrigin              String
+  maritalStatus                String
+  employmentStatus             String
+  currentRoleOrExperience      String
+  externalCoursesCompleted     String
+  careerBio                    String
+  studyPace                    StudyPace
+  hoursPerDay                  Int
+  lecturesPerDay               Int
+  lectureDurationMinutes       Int
+
+  selectedDays                 String[]
+  enrollmentDate               DateTime   @default(now())
+  estimatedGraduationDate      DateTime   @default(now())
+  completionPercentage         Int
+
+  totalSemestersOrSessions     Int
+  currentSemester              Int
+  totalSessions                Int
+  completedSessions            Int
+
+  totalCreditsRequired         Int
+  creditsEarned                Int
+  programDescription           String
+  scheduleSummary              String
+  prerequisitesMet             String[]
+  careerPathways               String[]
+
+  user                         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semisters                    ProgramSemester[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+}
+
+model ProgramSemester {
+  id                           String       @id @default(cuid())
+  programId                    String
+
+  semesterNumber               Int
+  title                        String
+  totalLectures                Int
+  coreModules                  String[]
+  status                       TopicStatus @default(pending)
+  isCompleted                  Boolean     @default(false)
+
+  course                       AcademyProgram    @relation(fields: [programId], references: [id], onDelete: Cascade)
+  modules                      ProgramModules[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+
+}
+
+model ProgramModules {
+  id                           String       @id @default(cuid())
+  semesterId                   String
+
+  title                        String
+  totalLectures                Int
+  status                       TopicStatus @default(pending)
+  isCompleted                  Boolean     @default(false)
+
+  semester                     ProgramSemester    @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  lectures                     ProgramLectures[]
+  exams                        ProgramAssessments[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+}
+
+model ProgramAssessments {
+  id                     String       @id @default(cuid())
+  modulesId              String
+  type                   String
+
+  title                  String
+  description            String
+  assessment             Json?
+
+  totalScore             String?
+  grade                  String?
+  remark                 String?
+
+  status                 TopicStatus @default(pending)
+  isCompleted            Boolean     @default(false)
+  assessmentTime         DateTime    @default(now())
+
+
+  modules                ProgramModules             @relation(fields: [modulesId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model ProgramLectures {
+  id                     String       @id @default(cuid())
+  modulesId              String
+
+  title                  String
+  description            String
+  status                 TopicStatus @default(pending)
+  isCompleted            Boolean     @default(false)
+
+  modules                ProgramModules             @relation(fields: [modulesId], references: [id], onDelete: Cascade)
+  topics                 ProgramTopics[]
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model ProgramTopics {
+  id                     String       @id @default(cuid())
+  lectureId              String
+
+  title                  String
+  description            String
+  content                Json?
+
+  audioUrl               String?
+  imageUrl               String?
+  videoUrl               String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+
+  lectures               ProgramLectures            @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model SpecializedCourses {
+  id                           String       @id @default(cuid())
+  userId                       String
+  title                        String?
+  description                  String?
+
+  programTitle                 String
+  institutionName              String
+  countryName                  String
+  language                     String
+  countryFlag                  String
+  tierTitle                    String
+  levelTitle                   String
+  fieldOfStudy                 String
+  dateOfBirth                  DateTime
+
+  educationLevel               String
+  countryOfOrigin              String
+  maritalStatus                String
+  employmentStatus             String
+  currentRoleOrExperience      String
+  externalCoursesCompleted     String
+  careerBio                    String
+  studyPace                    StudyPace
+  hoursPerDay                  Int
+  lecturesPerDay               Int
+  lectureDurationMinutes       Int
+
+  selectedDays                 String[]
+  enrollmentDate               DateTime   @default(now())
+  estimatedGraduationDate      DateTime   @default(now())
+  completionPercentage         Int
+
+  totalSemestersOrSessions     Int
+  currentSemester              Int
+  totalSessions                Int
+  completedSessions            Int
+
+  totalCreditsRequired         Int
+  creditsEarned                Int
+  programDescription           String
+  scheduleSummary              String
+  prerequisitesMet             String[]
+  careerPathways               String[]
+
+  user                         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  semisters                    SpecializedCourseSemester[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+}
+
+
+model SpecializedCourseSemester {
+  id                           String       @id @default(cuid())
+  courseId                     String
+
+  semesterNumber               Int
+  title                        String
+  totalLectures                Int
+  coreModules                  String[]
+  status                       TopicStatus @default(pending)
+  isCompleted                  Boolean     @default(false)
+
+  course                       SpecializedCourses    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  modules                      SpecializedCourseModules[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+
+}
+
+model SpecializedCourseModules {
+  id                           String       @id @default(cuid())
+  semesterId                   String
+
+  title                        String
+  totalLectures                Int
+  status                       TopicStatus  @default(pending)
+  isCompleted                  Boolean      @default(false)
+
+  semester                     SpecializedCourseSemester    @relation(fields: [semesterId], references: [id], onDelete: Cascade)
+  lectures                     SpecializedCourseLectures[]
+  exams                        SpecializedCourseAssessments[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+
+}
+
+model SpecializedCourseAssessments {
+  id                     String       @id @default(cuid())
+  modulesId              String
+  type                   String
+
+  title                  String
+  description            String
+  assessment             Json?
+
+  totalScore             String?
+  grade                  String?
+  remark                 String?
+
+  status                 TopicStatus @default(pending)
+  isCompleted            Boolean     @default(false)
+  assessmentTime         DateTime    @default(now())
+
+  modules                SpecializedCourseModules             @relation(fields: [modulesId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model SpecializedCourseLectures {
+  id                     String       @id @default(cuid())
+  modulesId              String
+
+  title                  String
+  description            String
+  status                 TopicStatus @default(pending)
+  isCompleted            Boolean     @default(false)
+
+  modules                SpecializedCourseModules             @relation(fields: [modulesId], references: [id], onDelete: Cascade)
+  topics                 SpecializedCourseTopics[]
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model SpecializedCourseTopics {
+  id                     String       @id @default(cuid())
+  lectureId              String
+
+  title                  String
+  description            String
+  content                Json?
+
+  audioUrl               String?
+  imageUrl               String?
+  videoUrl               String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+
+  lectures               SpecializedCourseLectures            @relation(fields: [lectureId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model ResearchCenter {
+  id                           String       @id @default(cuid())
+  userId                       String
+  title                        String?
+  description                  String?
+
+  researchTitle                String
+  institutionName              String
+  countryName                  String
+  language                     String
+  countryFlag                  String
+  tierTitle                    String
+  levelTitle                   String
+  fieldOfStudy                 String
+  dateOfBirth                  DateTime
+  educationLevel               String
+  countryOfOrigin              String
+
+  maritalStatus                String
+  employmentStatus             String
+  currentRoleOrExperience      String
+  externalCoursesCompleted     String
+  careerBio                    String
+  researchPace                 StudyPace
+  hoursPerDay                  Int
+  researchPerDay               Int
+  researchDurationMinutes      Int
+
+  selectedDays                 String[]
+  enrollmentDate               DateTime   @default(now())
+  latestUpdate                 DateTime   @default(now())
+  completionPercentage         Int
+  totalChapters                Int
+  currentChapter               Int
+  totalPages                   Int
+  pagesRead                    Int
+  researchDescription          String
+  scheduleSummary              String
+  prerequisitesMet             String[]
+  careerPathways               String[]
+  researchContext              String
+
+  user                         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapters                     ResearchChapter[]
+  assessments                  ResearchAssessments[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+}
+
+
+model ResearchAssessments {
+  id                     String       @id @default(cuid())
+  researchId              String
+  type                   String
+
+  title                  String
+  description            String
+  assessment             Json?
+
+  totalScore             String?
+  grade                  String?
+  remark                 String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+  assessmentTime         DateTime          @default(now())
+
+  research               ResearchCenter             @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model ResearchChapter {
+  id                           String       @id @default(cuid())
+  researchId                   String
+
+  title                        String
+  totalPages                   Int
+  chapterNumber                Int
+  coreModules                  String[]
+  
+  status                       TopicStatus       @default(pending)
+  isCompleted                  Boolean           @default(false)
+
+  research                     ResearchCenter    @relation(fields: [researchId], references: [id], onDelete: Cascade)
+  topics                       ResearchChapterTopics[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+
+}
+
+model ResearchChapterTopics {
+  id                     String       @id @default(cuid())
+  chapterId             String
+
+  title                  String
+  description            String
+  content                Json?
+
+  audioUrl               String?
+  imageUrl               String?
+  videoUrl               String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+
+  chapter                ResearchChapter            @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+
+model AcademyLibrary {
+  id                           String       @id @default(cuid())
+  userId                       String
+  title                        String?
+  description                  String?
+
+  researchTitle                String
+  institutionName              String
+  countryName                  String
+  language                     String
+  countryFlag                  String
+  tierTitle                    String
+  levelTitle                   String
+  fieldOfStudy                 String
+  dateOfBirth                  DateTime
+  educationLevel               String
+  countryOfOrigin              String
+
+  maritalStatus                String
+  employmentStatus             String
+  currentRoleOrExperience      String
+  externalCoursesCompleted     String
+  careerBio                    String
+  researchPace                 StudyPace
+  hoursPerDay                  Int
+  researchPerDay               Int
+  researchDurationMinutes      Int
+
+  selectedDays                 String[]
+  enrollmentDate               DateTime   @default(now())
+  latestUpdate                 DateTime   @default(now())
+  completionPercentage         Int
+  totalChapters                Int
+  currentChapter               Int
+  totalPages                   Int
+  pagesRead                    Int
+  researchDescription          String
+
+  scheduleSummary              String
+  prerequisitesMet             String[]
+  careerPathways               String[]
+  researchContext              String
+ 
+  user                         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  chapters                     LibraryChapter[]
+  assessments                  LibraryAssessments[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+}
+
+
+model LibraryAssessments {
+  id                     String       @id @default(cuid())
+  libraryId              String
+  type                   String
+
+  title                  String
+  description            String
+  assessment             Json?
+
+  totalScore             String?
+  grade                  String?
+  remark                 String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+  assessmentTime         DateTime          @default(now())
+
+  research               AcademyLibrary             @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model LibraryChapter {
+  id                           String       @id @default(cuid())
+  libraryId                    String
+
+  title                        String
+  totalPages                   Int
+  chapterNumber                Int
+  coreModules                  String[]
+  
+  status                       TopicStatus       @default(pending)
+  isCompleted                  Boolean           @default(false)
+
+  library                      AcademyLibrary    @relation(fields: [libraryId], references: [id], onDelete: Cascade)
+  topics                       AcademyLibraryTopics[]
+  createdAt                    DateTime    @default(now())
+  updatedAt                    DateTime    @updatedAt
+
+
+}
+
+model AcademyLibraryTopics {
+  id                     String       @id @default(cuid())
+  chapterId             String
+
+  title                  String
+  description            String
+  content                Json?
+
+  audioUrl               String?
+  imageUrl               String?
+  videoUrl               String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+
+  chapter                LibraryChapter            @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model StudyPrograms { 
+  id                     String       @id @default(cuid())
+  userId                 String
+  title                  String?
+  description            String?
+
+  country                String
+  institutionType        String
+  qualificationType      String
+  institutionName        String
+  fieldOfStudy           String
+  language               String
+  studyPace              StudyPace
+  learningGoals          String
+
+  topicsCompleted        Int?
+  totalTopics            Int?
+  completionPercentage   Int?
+
+  user                   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topics                 StudyProgramTopics[]
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model StudyProgramTopics {
+  id                     String       @id @default(cuid())
+  programId              String
+
+  title                  String
+  description            String
+  content                Json?
+
+  audioUrl               String?
+  imageUrl               String?
+  videoUrl               String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+
+  program                StudyPrograms @relation(fields: [programId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model CheckBestFits {
+  id                     String       @id @default(cuid())
+  userId                 String
+  title                  String?
+  description            String?
+
+  country                String
+  educationLevel         String
+  dateOfBirth            DateTime
+
+  employmentStatus       EmploymentStatus
+  maritalStatus          MaritalStatus
+  numberOfChildren       Int          @default(0)
+  language               String
+
+  topicsCompleted        Int?
+  totalTopics            Int?
+  completionPercentage   Int?
+
+  industryOrWorkField    String
+  dreamCareerRole        String
+  previousFieldsOfStudy  String?
+  additionalContext      String?
+
+  user                   User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topics                 CheckBestFitsTopics[]
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+ }
+
+ model CheckBestFitsTopics {
+  id                     String       @id @default(cuid())
+  checkingId             String
+
+  title                  String
+  description            String
+  content                Json?
+
+  audioUrl               String?
+  imageUrl               String?
+  videoUrl               String?
+
+  status                 TopicStatus       @default(pending)
+  isCompleted            Boolean           @default(false)
+
+  checking               CheckBestFits @relation(fields: [checkingId], references: [id], onDelete: Cascade)
+  createdAt              DateTime    @default(now())
+  updatedAt              DateTime    @updatedAt
+}
+
+model EnrolledProgram {
+  id                    String       @id @default(cuid()) 
+  userId                String
+
+  programId             String
+  semesterId            String
+  modulesId             String
+  assessmentId          String
+  programType           String
+
+  country               String
+  framework             String
+  programName           String
+  institution           String
+  level                 String
+  description           String?
+  studyPace             String
+  
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timetables            TimetableSystem[]
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+}
+
+model TimetableSystem {
+  id              String       @id @default(cuid())
+  programId       String
+
+  type            String      
+  title           String
+  courseName      String
+  courseCode      String
+
+  targetDate      String  
+  startTime       String 
+  duration        String 
+  location        String  
+  institution     String
+  status          TopicStatus       @default(pending)
+  isCompleted     Boolean           @default(false)
+
+
+  program         EnrolledProgram           @relation(fields: [programId], references: [id], onDelete: Cascade)
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+ }
+
+model Certificates {
+  id                          String          @id @default(cuid())
+  userId                      String
+  certificateName             String?
+  studentName                 String?
+
+  matricNumber                String?
+  programTitle                String?
+  faculty                     String?
+  
+  institution                 String?
+  graduationDate              String?
+  verificationCode            String?
+
+  cumulativeGpa               Int?
+  maxGpa                      Int?
+  overallPercentage           Int?
+
+  degreeClass                 String?
+  overallRemark               String?
+  testimonialBody             String?
+  status                      TopicStatus     @default(pending)
+  isCompleted                 Boolean         @default(false)
+
+
+  user                        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessments                 Assessments[]
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+ }
+
+ model Assessments {
+  id                          String       @id @default(cuid())
+  certificateId               String
+
+  assessmentName              String?
+  test                        String? 
+  exam                        String?
+  totalScore                  String? 
+  grade                       String?
+  remark                      String?
+
+  certificate                 Certificates       @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  createdAt                   DateTime     @default(now())
+  updatedAt                   DateTime     @updatedAt
+ }
+
+ enum EmploymentStatus {
+  employed
+  self_employed
+  unemployed
+  student
+}
+
+enum MaritalStatus {
+  single
+  married
+  divorced
+  widowed
+}
+
+enum StudyPace {
+  full_time
+  part_time
+  self_paced
+}
+
+enum TopicStatus {
+  pending
+  in_progress
+  completed
+}
+
+enum ChartType {
+  BAR
+  FUNNEL
+  LINE
+  AREA
+  GAUGE
+  PIE
+  DONUT
+  STACKED_LINE
+  STACKED_BAR
+  STACKED_AREA
+  HISTOGRAM
+  MAP
+}
+
+enum MetricsType {
+  DAILY
+  WEEKLY
+  QUARTERLY
+  MONTHLY
+  YEARLY
+}
+
+enum MediaType {
+  IMAGE
+  AUDIO
+  DOCUMENT
+  VIDEO
+  TEXT
+  RECORDING
+}
+
+enum Roles {
+  EXECUTIVE
+  MANAGER
+  STAFF
+  EMPLOYEE
+  SUPERVISOR
+  PARENT
+  COURSE_MATE
+}
+
